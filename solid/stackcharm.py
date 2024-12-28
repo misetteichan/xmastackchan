@@ -3,6 +3,7 @@
 
 from solid2 import *
 from os import path, makedirs
+from concurrent.futures import ProcessPoolExecutor
 
 
 def __rounded_cube(width: int, height: int, depth: int, radius: int):
@@ -70,6 +71,12 @@ def __panel(depth):
     return f.translate(0, 0, -depth)
 
 
+def save_as_stl(obj, out, name):
+    from os import remove
+    obj.save_as_stl(f'{out}/{name}.stl')
+    remove(f'{out}/{name}.stl.scad')
+
+
 def main(size, holes, is_single_color, stl, out='out'):
     set_global_fn(100)
     head, foot, face, panel, thin_panel = [o.scale(size/face_width) for o in [
@@ -116,18 +123,22 @@ def main(size, holes, is_single_color, stl, out='out'):
 
     model = new_body + new_face + thin_panel
 
-    def save_as_stl(obj, name):
-        from os import remove
-        obj.save_as_stl(f'{out}/{name}.stl')
-        remove(f'{out}/{name}.stl.scad')
-
     if stl:
         if is_single_color:
-            save_as_stl(model, 'all')
+            save_as_stl(model, out, 'all')
         else:
-            save_as_stl(new_face, 'face')
-            save_as_stl(thin_panel, 'panel')
-            save_as_stl(new_body, 'body')
+            tasks = [
+                (new_face, 'face'),
+                (thin_panel, 'panel'),
+                (new_body, 'body')
+            ]
+            with ProcessPoolExecutor() as exec:
+                futures = [exec.submit(save_as_stl, o, out, n) for o, n in tasks]
+                for future in futures:
+                    try:
+                        future.result()
+                    except Exception as e:
+                        print(f'Task failed: {e}')
     else:
         model.rotateX(90).save_as_scad(f'{out}/model.scad')
 
