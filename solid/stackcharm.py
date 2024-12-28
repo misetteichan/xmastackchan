@@ -152,4 +152,4 @@ if __name__ == '__main__':
     parser.add_argument('--stl', action='store_true')
     args = parser.parse_args()
 
-    main(size=args.size, holes=args.hole, is_single_color=args.single, stl=True)
+    main(size=args.size, holes=args.hole, is_single_color=args.single, stl=args.stl)
