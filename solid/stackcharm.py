@@ -116,13 +116,18 @@ def main(size, holes, is_single_color, stl, out='out'):
 
     model = new_body + new_face + thin_panel
 
+    def save_as_stl(obj, name):
+        from os import remove
+        obj.save_as_stl(f'{out}/{name}.stl')
+        remove(f'{out}/{name}.stl.scad')
+
     if stl:
         if is_single_color:
-            model.save_as_stl(f'{out}/all.stl')
+            save_as_stl(model, 'all')
         else:
-            new_face.save_as_stl(f'{out}/face.stl')
-            thin_panel.save_as_stl(f'{out}/panel.stl')
-            new_body.save_as_stl(f'{out}/body.stl')
+            save_as_stl(new_face, 'face')
+            save_as_stl(thin_panel, 'panel')
+            save_as_stl(new_body, 'body')
     else:
         model.rotateX(90).save_as_scad(f'{out}/model.scad')
 
